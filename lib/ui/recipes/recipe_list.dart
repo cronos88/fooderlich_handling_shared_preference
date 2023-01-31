@@ -3,6 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../colors.dart';
+import '../widgets/custom_dropdown.dart';
+
 class RecipeList extends StatefulWidget {
   const RecipeList({Key? key}) : super(key: key);
 
@@ -117,7 +120,19 @@ class _RecipeListState extends State<RecipeList> {
         child: Row(
           children: [
             // Replace
-            const Icon(Icons.search),
+            IconButton(
+              icon: const Icon(Icons.search),
+              // 1. Agregue onPressed para manejar el evento de toque.
+              onPressed: () {
+                // 2. Use the current search text to start a search.
+                startSearch(searchTextController.text);
+                // 3. Oculte el teclado usando la clase FocusScope.
+                final currentFocus = FocusScope.of(context);
+                if (!currentFocus.hasPrimaryFocus) {
+                  currentFocus.unfocus();
+                }
+              },
+            ),
             const SizedBox(
               width: 6.0,
             ),
@@ -126,26 +141,59 @@ class _RecipeListState extends State<RecipeList> {
               child: Row(
                 children: <Widget>[
                   Expanded(
+                    // 3. Agregue un TextField para ingresar sus consultas de
+                    // búsqueda.
                     child: TextField(
                       decoration: const InputDecoration(
                           border: InputBorder.none, hintText: 'Search'),
                       autofocus: false,
-                      controller: searchTextController,
-                      onChanged: (query) => {
-                        if (query.length >= 3)
-                          {
-                            // Rebuild list
-                            setState(
-                              () {
-                                currentSearchList.clear();
-                                currentCount = 0;
-                                currentEndPosition = pageCount;
-                                currentStartPosition = 0;
-                              },
-                            )
-                          }
+                      // 4. Set the keyboard action to TextInputAction.done.
+                      // This closes the keyboard when the user presses the
+                      // Done button.
+                      textInputAction: TextInputAction.done,
+                      // 5. Inicie la búsqueda cuando el usuario termine de
+                      // ingresar texto.
+
+                      onSubmitted: (value) {
+                        startSearch(searchTextController.text);
                       },
+                      controller: searchTextController,
                     ),
+                  ),
+                  // 6. Crea un PopupMenuButton pa mostrar búsquedas anteriores.
+                  PopupMenuButton<String>(
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: lightGrey,
+                    ),
+                    // 7. Cuando el usuario selecciona un elemento de búsquedas
+                    // anteriores, inicia una nueva búsqueda.
+                    onSelected: (String value) {
+                      searchTextController.text = value;
+                      startSearch(searchTextController.text);
+                    },
+                    itemBuilder: (BuildContext context) {
+                      // 8. Crea una lista de menús desplegables personalizados
+                      // (ver widgets/custom_dropdown.dart) para mostrar
+                      // búsquedas anteriores.
+                      return previousSearches
+                          .map<CustomDropdownMenuItem<String>>((String value) {
+                        return CustomDropdownMenuItem<String>(
+                          value: value,
+                          text: value,
+                          callback: () {
+                            setState(() {
+                              // 9. If the X icon is pressed, remove the search
+                              // from the previous searches and close the
+                              // pop-up menu.
+                              previousSearches.remove(value);
+                              savePreviousSearches();
+                              Navigator.pop(context);
+                            });
+                          },
+                        );
+                      }).toList();
+                    },
                   ),
                 ],
               ),
