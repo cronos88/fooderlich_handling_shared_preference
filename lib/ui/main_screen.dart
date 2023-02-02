@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'colors.dart';
 import 'myrecipes/my_recipes_list.dart';
@@ -17,7 +18,8 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   List<Widget> pageList = <Widget>[];
-  // TODO: Add index key
+  // Add index key
+  static const String prefSelectedIndexKey = 'selectedIndex';
 
   @override
   void initState() {
@@ -25,18 +27,46 @@ class _MainScreenState extends State<MainScreen> {
     pageList.add(const RecipeList());
     pageList.add(const MyRecipesList());
     pageList.add(const ShoppingList());
-    // TODO: Call getCurrentIndex
+    // Call getCurrentIndex
+    // Eso recuperará el índice seleccionado actualmente cuando se cargue la
+    // página.
+    getCurrentIndex();
   }
 
-  // TODO: Add saveCurrentIndex
+  // saveCurrentIndex
+  void saveCurrentIndex() async {
+    // 1. Utilice la palabra clave await para esperar una instancia del paquete
+    // SharedPreferences.
+    final prefs = await SharedPreferences.getInstance();
+    // 2. Guarde el índice seleccionado como un número entero.
+    prefs.setInt(prefSelectedIndexKey, _selectedIndex);
+  }
 
-  // TODO: Add getCurrentIndex
+  // Add getCurrentIndex
+  void getCurrentIndex() async {
+    // 1. Utilice la palabra clave await para esperar una instancia de
+    // sharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    // 2. Compruebe si ya existe una preferencia por su índice actual.
+    if (prefs.containsKey(prefSelectedIndexKey)) {
+      // 3. Obtenga el índice actual y actualice el estado en consecuencia.
+      setState(() {
+        final index = prefs.getInt(prefSelectedIndexKey);
+        if (index != null) {
+          _selectedIndex = index;
+        }
+      });
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    // TODO: Call saveCurrentIndex
+    // Call saveCurrentIndex
+    // Esto guarda el índice actual cada vez que el usuario selecciona una
+    // pestaña diferente.
+    saveCurrentIndex();
   }
 
   @override
@@ -106,4 +136,4 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-// SIGUE LA PAGINA 350 - GETTING STARTED
+// SIGUE LA PAGINA 362 - SAVING THE SELECTED TAB
